@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IXTH Legion // Central Cogitator</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blood:        #8B0000;
+  --blood-bright: #CC0000;
+  --blood-deep:   #3a0000;
+  --blood-glow:   rgba(180,0,0,0.55);
+  --gold:         #C9A84C;
+  --gold-bright:  #E8C46A;
+  --gold-dim:     #6A5018;
+  --amber:        #D4780A;
+  --amber-dim:    #7A3A00;
+  --bg:           #060202;
+  --panel-bg:     #0a0303;
+  --panel-dark:   #050101;
+  --border:       #2a0e0e;
+  --border-gold:  #3a2800;
+  --text:         #E8C89A;
+  --text-dim:     #7A5A40;
+  --text-bright:  #F5DFB8;
+  --text-amber:   #CC8020;
+  --green:        #00FF41;
+  --scan-lines:   rgba(0,0,0,0.12);
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; min-height:100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  overflow-x: hidden;
+}
+
+/* ═══════════════════════════════
+   BACKGROUND LAYERS
+═══════════════════════════════ */
+
+/* Deep blood radial */
+.bg-glow {
+  position:fixed; inset:0; z-index:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%,
+      rgba(80,0,0,0.22) 0%, transparent 70%),
+    radial-gradient(ellipse 100% 40% at 50% 100%,
+      rgba(40,0,0,0.3) 0%, transparent 60%);
+  pointer-events:none;
+}
+
+/* Hex grid pattern */
+.bg-hex {
+  position:fixed; inset:0; z-index:0;
+  opacity:0.04;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Cpath d='M28 0 L56 16 L56 48 L28 64 L0 48 L0 16Z' fill='none' stroke='%23CC0000' stroke-width='0.5'/%3E%3Cpath d='M28 64 L56 80 L56 100' fill='none' stroke='%23CC0000' stroke-width='0.5'/%3E%3Cpath d='M28 64 L0 80 L0 100' fill='none' stroke='%23CC0000' stroke-width='0.5'/%3E%3C/svg%3E");
+  background-size: 56px 100px;
+  pointer-events:none;
+}
+
+/* CRT scanlines */
+.bg-scan {
+  position:fixed; inset:0; z-index:100;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 3px,
+    var(--scan-lines) 3px, var(--scan-lines) 4px
+  );
+  pointer-events:none;
+}
+
+/* CRT phosphor flicker */
+.bg-scan::after {
+  content:'';
+  position:fixed; inset:0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(180,0,0,0.015) 50%,
+    transparent 100%
+  );
+  animation: scanflicker 8s linear infinite;
+  pointer-events:none;
+}
+@keyframes scanflicker {
+  0%   { transform:translateY(-100%); opacity:0.8; }
+  100% { transform:translateY(100%);  opacity:0.4; }
+}
+
+/* Vignette */
+.bg-vignette {
+  position:fixed; inset:0; z-index:99;
+  background: radial-gradient(ellipse at center,
+    transparent 35%, rgba(0,0,0,0.92) 100%);
+  pointer-events:none;
+}
+
+/* CRT glass scratch */
+.bg-scratch {
+  position:fixed; inset:0; z-index:98;
+  opacity:0.025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px;
+  pointer-events:none;
+}
+
+/* ═══════════════════════════════
+   OUTER FRAME — the cogitator casing
+═══════════════════════════════ */
+.outer-frame {
+  position:relative; z-index:1;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:0 12px 48px;
+}
+
+/* Top bezel */
+.bezel-top {
+  width:100%;
+  max-width:920px;
+  padding:10px 0 0;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:4px;
+}
+
+.bezel-row {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:0.5rem;
+  color: var(--text-dim);
+  letter-spacing:0.3em;
+}
+
+.bezel-row .br-line {
+  flex:1; height:1px;
+  background: linear-gradient(90deg, transparent, var(--border), var(--blood-deep), var(--border), transparent);
+}
+
+.bezel-row .br-thick {
+  flex:1; height:2px;
+  background: linear-gradient(90deg, transparent, var(--blood-deep), var(--blood), var(--blood-deep), transparent);
+  box-shadow: 0 0 8px rgba(139,0,0,0.4);
+}
+
+.bezel-indent {
+  display:flex;
+  gap:6px;
+  align-items:center;
+  white-space:nowrap;
+}
+
+.bezel-led {
+  width:5px; height:5px;
+  border-radius:50%;
+  background: var(--blood-bright);
+  box-shadow: 0 0 6px var(--blood-bright);
+  animation: led-pulse 3s ease-in-out infinite;
+}
+.bezel-led.gold {
+  background: var(--gold);
+  box-shadow: 0 0 6px var(--gold);
+  animation-delay:1s;
+}
+.bezel-led.dim {
+  background: var(--amber-dim);
+  box-shadow: none;
+  animation: none;
+}
+@keyframes led-pulse {
+  0%,100%{ opacity:1; }
+  50%{ opacity:0.3; }
+}
+
+/* ═══════════════════════════════
+   MAIN SCREEN AREA
+═══════════════════════════════ */
+.screen {
+  width:100%;
+  max-width:920px;
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--blood);
+  background: var(--panel-bg);
+  position:relative;
+  padding:0;
+  box-shadow:
+    0 0 60px rgba(139,0,0,0.15),
+    inset 0 0 80px rgba(0,0,0,0.6);
+}
+
+/* Gothic arch top ornament */
+.screen-arch {
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:0;
+  border-bottom:1px solid var(--border);
+  background: var(--panel-dark);
+}
+
+.arch-side {
+  flex:1;
+  height:32px;
+  display:flex;
+  align-items:center;
+  padding:0 12px;
+  gap:8px;
+  border-bottom:1px solid var(--blood-deep);
+}
+
+.arch-text {
+  font-size:0.48rem;
+  color: var(--text-dim);
+  letter-spacing:0.25em;
+  white-space:nowrap;
+}
+
+.arch-blink {
+  animation: blink-text 1.4s step-end infinite;
+}
+@keyframes blink-text {
+  0%,100%{ opacity:1; }
+  50%{ opacity:0; }
+}
+
+.arch-center {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  min-width:160px;
+  padding:4px 20px;
+  border-left:1px solid var(--border);
+  border-right:1px solid var(--border);
+  background: linear-gradient(180deg, rgba(80,0,0,0.12), transparent);
+}
+
+.arch-cog {
+  font-size:0.6rem;
+  color: var(--gold-dim);
+  letter-spacing:0.15em;
+}
+
+/* ═══════════════════════════════
+   HEADER — crest block
+═══════════════════════════════ */
+.crest-block {
+  padding:32px 32px 24px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:0;
+  border-bottom:1px solid var(--border);
+  position:relative;
+  overflow:hidden;
+}
+
+/* Subtle data stream behind crest */
+.data-stream {
+  position:absolute;
+  top:0; left:0; right:0; bottom:0;
+  font-size:0.45rem;
+  color: var(--blood-deep);
+  letter-spacing:0.1em;
+  line-height:1.4;
+  word-break:break-all;
+  overflow:hidden;
+  pointer-events:none;
+  opacity:0.7;
+  padding:4px;
+  animation: stream-scroll 20s linear infinite;
+}
+@keyframes stream-scroll {
+  0%  { transform:translateY(0); }
+  100%{ transform:translateY(-50%); }
+}
+
+.crest-designation {
+  font-size:0.52rem;
+  color: var(--blood-bright);
+  letter-spacing:0.5em;
+  text-transform:uppercase;
+  margin-bottom:14px;
+  opacity:0.75;
+  position:relative;
+}
+
+/* Blood drop SVG crest */
+.crest-icon {
+  position:relative;
+  margin-bottom:12px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.drop-wrap {
+  position:relative;
+  width:48px; height:64px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.drop-svg {
+  filter: drop-shadow(0 0 12px rgba(204,0,0,0.8)) drop-shadow(0 0 30px rgba(204,0,0,0.4));
+  animation: drop-throb 3s ease-in-out infinite;
+}
+@keyframes drop-throb {
+  0%,100%{ filter: drop-shadow(0 0 12px rgba(204,0,0,0.8)) drop-shadow(0 0 30px rgba(204,0,0,0.4)); }
+  50%    { filter: drop-shadow(0 0 20px rgba(204,0,0,1.0)) drop-shadow(0 0 50px rgba(204,0,0,0.6)); }
+}
+
+.wing-row {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  width:100%;
+  max-width:600px;
+  margin-bottom:10px;
+  position:relative;
+}
+
+.wing-line {
+  flex:1; height:1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), var(--gold), var(--gold-dim));
+}
+.wing-line.r {
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold), var(--gold-dim), transparent);
+}
+
+.wing-diamond {
+  width:7px; height:7px;
+  background: var(--gold);
+  transform:rotate(45deg);
+  box-shadow: 0 0 8px rgba(201,168,76,0.6);
+  flex-shrink:0;
+}
+
+.crest-title {
+  font-family:'Cinzel', serif;
+  font-weight:900;
+  font-size:clamp(1.8rem, 5.5vw, 3.6rem);
+  color: var(--text-bright);
+  letter-spacing:0.1em;
+  text-align:center;
+  line-height:0.95;
+  text-shadow:
+    0 0 80px rgba(180,0,0,0.7),
+    0 0 25px rgba(139,0,0,0.4),
+    0 4px 8px rgba(0,0,0,0.95);
+  position:relative;
+  margin-bottom:6px;
+}
+
+.crest-subtitle {
+  font-family:'Cinzel', serif;
+  font-size:clamp(0.55rem, 1.3vw, 0.72rem);
+  color: var(--gold-dim);
+  letter-spacing:0.4em;
+  text-transform:uppercase;
+  text-align:center;
+  margin-bottom:20px;
+  position:relative;
+}
+
+/* Gothic ornament divider */
+.gothic-div {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  max-width:500px;
+  margin-bottom:12px;
+  position:relative;
+}
+.gothic-div .gl {
+  flex:1; height:1px;
+  background: linear-gradient(90deg, transparent, var(--border), var(--blood-deep));
+}
+.gothic-div .gl.r {
+  background: linear-gradient(90deg, var(--blood-deep), var(--border), transparent);
+}
+.gothic-div .gc {
+  display:flex; gap:6px; align-items:center;
+}
+.gothic-div .gs {
+  width:4px; height:4px;
+  background:var(--blood-bright);
+  transform:rotate(45deg);
+  box-shadow:0 0 4px var(--blood-bright);
+}
+.gothic-div .gm {
+  width:6px; height:6px;
+  background:var(--gold);
+  transform:rotate(45deg);
+  box-shadow:0 0 6px rgba(201,168,76,0.5);
+}
+
+/* Status bar */
+.status-bar {
+  display:flex;
+  align-items:center;
+  gap:18px;
+  font-size:0.52rem;
+  color: var(--text-dim);
+  letter-spacing:0.15em;
+  position:relative;
+}
+
+.status-dot {
+  display:inline-block;
+  width:5px; height:5px;
+  border-radius:50%;
+  background: var(--green);
+  box-shadow:0 0 6px var(--green);
+  margin-right:6px;
+  animation:blink-led 2s step-end infinite;
+}
+@keyframes blink-led {
+  0%,100%{ opacity:1; }
+  50%{ opacity:0.1; }
+}
+
+.status-sep { color: var(--border); }
+
+/* ═══════════════════════════════
+   TWO-COLUMN LAYOUT
+   Left: readouts / Right: modules
+═══════════════════════════════ */
+.cogitator-body {
+  display:grid;
+  grid-template-columns:200px 1fr;
+  min-height:420px;
+}
+
+/* ── LEFT PANEL: system readouts ── */
+.left-panel {
+  border-right:1px solid var(--border);
+  background: var(--panel-dark);
+  display:flex;
+  flex-direction:column;
+}
+
+.lp-section {
+  border-bottom:1px solid var(--border);
+  padding:12px 14px;
+}
+
+.lp-label {
+  font-size:0.48rem;
+  color: var(--blood-bright);
+  letter-spacing:0.35em;
+  text-transform:uppercase;
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.lp-label::before {
+  content:'';
+  display:block;
+  width:4px; height:4px;
+  background:var(--blood-bright);
+  transform:rotate(45deg);
+  flex-shrink:0;
+  box-shadow:0 0 4px var(--blood-bright);
+}
+
+.lp-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  font-size:0.5rem;
+  color: var(--text-dim);
+  letter-spacing:0.1em;
+  margin-bottom:4px;
+  line-height:1.6;
+}
+.lp-row .lp-val {
+  color: var(--text-amber);
+}
+.lp-row .lp-val.green { color: var(--green); }
+.lp-row .lp-val.blood { color: var(--blood-bright); }
+
+/* scrolling hex readout */
+.hex-readout {
+  font-size:0.42rem;
+  color: var(--blood-deep);
+  line-height:1.5;
+  letter-spacing:0.08em;
+  word-break:break-all;
+  overflow:hidden;
+  max-height:72px;
+  position:relative;
+}
+.hex-readout::after {
+  content:'';
+  position:absolute;
+  bottom:0; left:0; right:0;
+  height:24px;
+  background: linear-gradient(transparent, var(--panel-dark));
+}
+.hex-inner {
+  animation: hex-scroll 12s linear infinite;
+}
+@keyframes hex-scroll {
+  0%  { transform:translateY(0); }
+  100%{ transform:translateY(-50%); }
+}
+
+/* Prayer seal */
+.prayer-seal {
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  text-align:center;
+}
+
+.seal-border {
+  border:1px solid var(--gold-dim);
+  padding:8px 10px;
+  width:100%;
+  position:relative;
+}
+.seal-border::before, .seal-border::after {
+  content:'✦';
+  position:absolute;
+  font-size:0.5rem;
+  color:var(--gold-dim);
+}
+.seal-border::before { top:-6px; left:50%; transform:translateX(-50%); background:var(--panel-dark); padding:0 4px; }
+.seal-border::after  { bottom:-6px; left:50%; transform:translateX(-50%); background:var(--panel-dark); padding:0 4px; }
+
+.seal-text {
+  font-family:'Crimson Text', serif;
+  font-style:italic;
+  font-size:0.7rem;
+  color: var(--text-dim);
+  line-height:1.5;
+}
+
+/* purity counter */
+.purity-row {
+  display:flex;
+  justify-content:space-between;
+  width:100%;
+  padding:0 2px;
+}
+.purity-pip {
+  width:10px; height:10px;
+  border:1px solid var(--blood-deep);
+  transform:rotate(45deg);
+}
+.purity-pip.filled {
+  background: var(--blood);
+  box-shadow: 0 0 4px var(--blood-bright);
+  border-color:var(--blood-bright);
+}
+
+/* ── RIGHT PANEL: module grid ── */
+.right-panel {
+  display:flex;
+  flex-direction:column;
+}
+
+.rp-header {
+  border-bottom:1px solid var(--border);
+  padding:10px 20px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background: var(--panel-dark);
+}
+
+.rp-header-text {
+  font-size:0.5rem;
+  color: var(--text-dim);
+  letter-spacing:0.3em;
+  text-transform:uppercase;
+}
+
+.rp-header-line {
+  flex:1; height:1px;
+  background: var(--border);
+}
+
+.rp-header-count {
+  font-size:0.48rem;
+  color: var(--blood-bright);
+  letter-spacing:0.2em;
+}
+
+/* Module cards */
+.module-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1px;
+  background: var(--border);
+  flex:1;
+}
+
+.module-card {
+  background: var(--panel-bg);
+  padding:28px 18px 22px;
+  text-decoration:none;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  gap:10px;
+  position:relative;
+  overflow:hidden;
+  cursor:pointer;
+  transition:background 0.2s;
+}
+
+/* gothic arch top on each card */
+.module-card::before {
+  content:'';
+  position:absolute;
+  top:0; left:0; right:0;
+  height:3px;
+  background: var(--blood-deep);
+  transition:background 0.2s, box-shadow 0.2s;
+}
+
+.module-card:hover {
+  background: rgba(80,0,0,0.08);
+}
+.module-card:hover::before {
+  background: var(--blood-bright);
+  box-shadow: 0 0 12px var(--blood-glow);
+}
+
+/* corner brackets */
+.module-card .bracket {
+  position:absolute;
+  width:12px; height:12px;
+  border-color:var(--gold-dim);
+  border-style:solid;
+  opacity:0;
+  transition:opacity 0.2s;
+}
+.module-card .bracket.tl { top:8px; left:8px; border-width:1px 0 0 1px; }
+.module-card .bracket.br { bottom:8px; right:8px; border-width:0 1px 1px 0; }
+.module-card:hover .bracket { opacity:1; }
+
+/* Sweep animation */
+.module-card .sweep {
+  position:absolute;
+  top:0; left:-120%;
+  width:60%; height:100%;
+  background: linear-gradient(90deg, transparent, rgba(180,0,0,0.06), transparent);
+  transition:left 0.5s ease;
+  pointer-events:none;
+}
+.module-card:hover .sweep { left:160%; }
+
+.mod-number {
+  font-size:0.45rem;
+  color: var(--blood-bright);
+  letter-spacing:0.4em;
+  opacity:0.65;
+}
+
+.mod-icon {
+  font-size:1.8rem;
+  line-height:1;
+  filter: drop-shadow(0 0 8px rgba(204,0,0,0.4));
+  transition:filter 0.2s;
+}
+.module-card:hover .mod-icon {
+  filter: drop-shadow(0 0 16px rgba(204,0,0,0.8));
+}
+
+.mod-title {
+  font-family:'Cinzel', serif;
+  font-weight:600;
+  font-size:clamp(0.65rem, 1.5vw, 0.82rem);
+  color: var(--text-bright);
+  letter-spacing:0.08em;
+  line-height:1.25;
+}
+
+.mod-desc {
+  font-family:'Crimson Text', serif;
+  font-style:italic;
+  font-size:0.8rem;
+  color: var(--text-dim);
+  line-height:1.5;
+  flex:1;
+}
+
+.mod-divider {
+  width:40px; height:1px;
+  background: linear-gradient(90deg, transparent, var(--border-gold), transparent);
+}
+
+.mod-status {
+  font-size:0.46rem;
+  letter-spacing:0.25em;
+  text-transform:uppercase;
+  padding:3px 10px;
+  border:1px solid;
+}
+.mod-status.online  { color:#4CAF50; border-color:#2a5e2a; background:rgba(76,175,80,0.06); }
+.mod-status.pending { color:var(--text-dim); border-color:var(--border); background:transparent;
+  animation:pending-flicker 4s ease-in-out infinite; }
+@keyframes pending-flicker {
+  0%,100%{ opacity:1; }
+  90%{ opacity:1; }
+  92%{ opacity:0.3; }
+  94%{ opacity:1; }
+  96%{ opacity:0.5; }
+  98%{ opacity:1; }
+}
+
+/* ═══════════════════════════════
+   BOTTOM STATUS STRIP
+═══════════════════════════════ */
+.status-strip {
+  border-top:1px solid var(--border);
+  background: var(--panel-dark);
+  padding:8px 20px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  overflow:hidden;
+}
+
+.ss-item {
+  font-size:0.46rem;
+  color: var(--text-dim);
+  letter-spacing:0.15em;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.ss-item .ss-val { color:var(--text-amber); }
+.ss-sep { color:var(--border); flex-shrink:0; }
+
+/* Scrolling marquee text */
+.ss-marquee {
+  flex:1;
+  overflow:hidden;
+  position:relative;
+}
+.ss-marquee::before {
+  content:'';
+  position:absolute; left:0; top:0; bottom:0;
+  width:20px;
+  background: linear-gradient(90deg, var(--panel-dark), transparent);
+  z-index:1;
+}
+.ss-marquee::after {
+  content:'';
+  position:absolute; right:0; top:0; bottom:0;
+  width:20px;
+  background: linear-gradient(90deg, transparent, var(--panel-dark));
+  z-index:1;
+}
+.ss-scroll {
+  font-size:0.46rem;
+  color: var(--blood-deep);
+  letter-spacing:0.15em;
+  white-space:nowrap;
+  animation: marquee 35s linear infinite;
+  display:inline-block;
+}
+@keyframes marquee {
+  0%  { transform:translateX(100%); }
+  100%{ transform:translateX(-100%); }
+}
+
+/* ═══════════════════════════════
+   BEZEL BOTTOM
+═══════════════════════════════ */
+.bezel-bottom {
+  width:100%; max-width:920px;
+  padding:4px 0 0;
+  display:flex; flex-direction:column; gap:4px;
+}
+
+/* ═══════════════════════════════
+   ANIMATIONS — entry
+═══════════════════════════════ */
+.screen        { animation:fadeIn 0.6s ease 0.1s both; }
+.crest-block   { animation:fadeDown 0.7s ease 0.2s both; }
+.cogitator-body{ animation:fadeIn 0.7s ease 0.4s both; }
+.status-strip  { animation:fadeIn 0.5s ease 0.6s both; }
+
+@keyframes fadeIn   { from{ opacity:0; } to{ opacity:1; } }
+@keyframes fadeDown { from{ opacity:0; transform:translateY(-14px); } to{ opacity:1; transform:translateY(0); } }
+
+.module-card:nth-child(1){ animation:cardIn 0.4s ease 0.55s both; }
+.module-card:nth-child(2){ animation:cardIn 0.4s ease 0.68s both; }
+.module-card:nth-child(3){ animation:cardIn 0.4s ease 0.81s both; }
+@keyframes cardIn { from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:translateY(0); } }
+
+/* ═══════════════════════════════
+   RESPONSIVE
+═══════════════════════════════ */
+@media (max-width:700px) {
+  .cogitator-body { grid-template-columns:1fr; }
+  .left-panel { display:none; }
+  .module-grid { grid-template-columns:1fr; }
+  .crest-title { font-size:1.8rem; }
+}
+@media (max-width:900px) and (min-width:701px) {
+  .left-panel { display:none; }
+  .cogitator-body { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="bg-hex"></div>
+<div class="bg-scan"></div>
+<div class="bg-vignette"></div>
+<div class="bg-scratch"></div>
+
+<div class="outer-frame">
+
+  <!-- TOP BEZEL -->
+  <div class="bezel-top">
+    <div class="bezel-row">
+      <div class="br-line"></div>
+      <div class="bezel-indent">
+        <div class="bezel-led"></div>
+        <div class="bezel-led gold"></div>
+        <div class="bezel-led dim"></div>
+        <span>COGITATOR-IX // PWR NOMINAL</span>
+        <div class="bezel-led dim"></div>
+        <div class="bezel-led gold"></div>
+        <div class="bezel-led"></div>
+      </div>
+      <div class="br-line"></div>
+    </div>
+    <div class="bezel-row">
+      <div class="br-thick"></div>
+    </div>
+  </div>
+
+  <!-- MAIN SCREEN -->
+  <div class="screen">
+
+    <!-- Arch bar -->
+    <div class="screen-arch">
+      <div class="arch-side">
+        <span class="arch-text">NODE: IXTH-CENTRAL-01</span>
+        <span class="arch-text arch-blink">█</span>
+      </div>
+      <div class="arch-center">
+        <span class="arch-cog">⚙ · ✦ · ⚙</span>
+      </div>
+      <div class="arch-side" style="justify-content:flex-end;">
+        <span class="arch-text arch-blink">█</span>
+        <span class="arch-text">MACHINE SPIRIT: ACTIVE</span>
+      </div>
+    </div>
+
+    <!-- CREST -->
+    <div class="crest-block">
+      <!-- Data stream background -->
+      <div class="data-stream" aria-hidden="true">
+        <div>FF A0 3C 00 8B 00 00 FF · SANGUIS IMPERATORIS · 4C 2A 00 FF CC 00 8B · IN SANGUINEM VERITAS · A0 FF 3C 8B 00 4A 00 CC · IMMORTALIS NONUS LEGIO · FF 8B 00 3C 4A CC A0 00 · LOGISTICIAM SANCTIONED · 8B CC 00 FF 4A A0 3C · MACHINE SPIRIT NOMINAL · 00 3C FF 8B A0 4C 00 CC · RULINGS ARCHIVE ACTIVE · CC 00 8B 3C FF 4A A0 · SANGUIS IMPERATORIS · A0 FF 3C 8B 00 4A 00 CC · IN SANGUINEM VERITAS · FF A0 3C 00 8B 00 00 FF · IMMORTALIS NONUS LEGIO · 4C 2A 00 FF CC 00 8B · LOGISTICIAM SANCTIONED ·</div>
+        <div>FF A0 3C 00 8B 00 00 FF · SANGUIS IMPERATORIS · 4C 2A 00 FF CC 00 8B · IN SANGUINEM VERITAS · A0 FF 3C 8B 00 4A 00 CC · IMMORTALIS NONUS LEGIO · FF 8B 00 3C 4A CC A0 00 · LOGISTICIAM SANCTIONED · 8B CC 00 FF 4A A0 3C · MACHINE SPIRIT NOMINAL · 00 3C FF 8B A0 4C 00 CC · RULINGS ARCHIVE ACTIVE · CC 00 8B 3C FF 4A A0 · SANGUIS IMPERATORIS · A0 FF 3C 8B 00 4A 00 CC · IN SANGUINEM VERITAS ·</div>
+      </div>
+
+      <div class="crest-designation">Immortal IXth Legion // Blood Angels // Logisticiam</div>
+
+      <div class="crest-icon">
+        <svg class="drop-svg" width="56" height="68" viewBox="0 0 56 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Gold-ringed outer frame -->
+          <path d="M28 4 C28 4 48 30 48 46 C48 57 39 64 28 64 C17 64 8 57 8 46 C8 30 28 4 28 4Z"
+                fill="rgba(60,0,0,0.6)" stroke="#C9A84C" stroke-width="1.4"/>
+          <!-- Main blood drop -->
+          <path d="M28 10 C28 10 43 31 43 45 C43 54.4 36.3 61 28 61 C19.7 61 13 54.4 13 45 C13 31 28 10 28 10Z"
+                fill="#CC0000" stroke="#8B0000" stroke-width="0.7"/>
+          <!-- Bright inner core -->
+          <path d="M28 16 C28 16 38 32 38 44 C38 51.7 33.5 57 28 57 C22.5 57 18 51.7 18 44 C18 32 28 16 28 16Z"
+                fill="#E81818" opacity="0.5"/>
+          <!-- Specular highlight -->
+          <ellipse cx="22" cy="38" rx="2.8" ry="7" fill="#FFFFFF" opacity="0.18" transform="rotate(-15 22 38)"/>
+          <!-- Top spark -->
+          <circle cx="28" cy="7" r="1.6" fill="#C9A84C" opacity="0.9"/>
+        </svg>
+      </div>
+      <style>
+        .drop-svg { animation: drop-throb 3.5s ease-in-out infinite; }
+      </style>
+
+      <div class="wing-row">
+        <div class="wing-line"></div>
+        <div class="wing-diamond"></div>
+        <div class="wing-line r"></div>
+      </div>
+
+      <h1 class="crest-title">Central Cogitator</h1>
+      <div class="crest-subtitle">Logisticiam Operations Network // Immortal IXth Legion</div>
+
+      <div class="gothic-div">
+        <div class="gl"></div>
+        <div class="gc"><div class="gs"></div><div class="gm"></div><div class="gs"></div></div>
+        <div class="gl r"></div>
+      </div>
+
+      <div class="status-bar">
+        <span><span class="status-dot"></span>SYSTEMS NOMINAL</span>
+        <span class="status-sep">|</span>
+        <span>4 MODULES REGISTERED</span>
+        <span class="status-sep">|</span>
+        <span>CLEARANCE: BATTLE BROTHER+</span>
+      </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="cogitator-body">
+
+      <!-- LEFT PANEL -->
+      <div class="left-panel">
+        <div class="lp-section">
+          <div class="lp-label">System Status</div>
+          <div class="lp-row"><span>COGITATOR</span><span class="lp-val green">ONLINE</span></div>
+          <div class="lp-row"><span>MACHINE SPIRIT</span><span class="lp-val green">ACTIVE</span></div>
+          <div class="lp-row"><span>DATA INTEGRITY</span><span class="lp-val">98.7%</span></div>
+          <div class="lp-row"><span>LAST PURGE</span><span class="lp-val">31.05.M26</span></div>
+          <div class="lp-row"><span>RULINGS LOADED</span><span class="lp-val blood">17</span></div>
+          <div class="lp-row"><span>PENDING</span><span class="lp-val blood">2</span></div>
+        </div>
+
+        <div class="lp-section">
+          <div class="lp-label">Legion Ident</div>
+          <div class="lp-row"><span>CHAPTER</span><span class="lp-val">BLOOD ANGELS</span></div>
+          <div class="lp-row"><span>LEGION</span><span class="lp-val">IMMORTAL IXTH</span></div>
+          <div class="lp-row"><span>DIVISION</span><span class="lp-val">LOGISTICIAM</span></div>
+          <div class="lp-row"><span>NODE</span><span class="lp-val">IXTH-CENT-01</span></div>
+        </div>
+
+        <div class="lp-section">
+          <div class="lp-label">Hex Readout</div>
+          <div class="hex-readout">
+            <div class="hex-inner">
+              FF A0 3C 00 8B 00 4A CC<br>
+              00 FF 8B 3C A0 4C 2A 00<br>
+              CC 8B 00 FF 3C 4A A0 00<br>
+              8B 00 CC FF 4A A0 3C 00<br>
+              A0 4C 00 8B 3C FF CC 00<br>
+              3C CC A0 4A 00 8B FF 00<br>
+              00 8B 4A CC FF A0 3C 00<br>
+              4A 3C 8B 00 CC FF A0 00<br>
+              FF A0 3C 00 8B 00 4A CC<br>
+              00 FF 8B 3C A0 4C 2A 00<br>
+              CC 8B 00 FF 3C 4A A0 00<br>
+              8B 00 CC FF 4A A0 3C 00<br>
+            </div>
+          </div>
+        </div>
+
+        <div class="prayer-seal">
+          <div class="lp-label">Litany of Access</div>
+          <div class="seal-border">
+            <div class="seal-text">"By the blood of Sanguinius, let these sacred data-rites be opened to the worthy."</div>
+          </div>
+          <div class="purity-row">
+            <div class="purity-pip filled"></div>
+            <div class="purity-pip filled"></div>
+            <div class="purity-pip filled"></div>
+            <div class="purity-pip filled"></div>
+            <div class="purity-pip filled"></div>
+            <div class="purity-pip"></div>
+            <div class="purity-pip"></div>
+            <div class="purity-pip"></div>
+            <div class="purity-pip"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="right-panel">
+        <div class="rp-header">
+          <span class="rp-header-text">// Available Modules</span>
+          <div class="rp-header-line"></div>
+          <span class="rp-header-count">04 REGISTERED</span>
+        </div>
+
+        <div class="module-grid">
+
+          <!-- MODULE I -->
+          <a href="https://uglymrtinhead.github.io/questandoathcogitator/" class="module-card">
+            <div class="sweep"></div>
+            <div class="bracket tl"></div>
+            <div class="bracket br"></div>
+            <div class="mod-number">MODULE · I</div>
+            <!-- Rulings - codex glyph in hex frame -->
+            <div class="mod-icon">
+              <svg width="46" height="46" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="23,3 40,12 40,34 23,43 6,34 6,12" fill="rgba(40,0,0,0.5)" stroke="#C9A84C" stroke-width="1"/>
+                <polygon points="23,6 37,13.5 37,32.5 23,40 9,32.5 9,13.5" fill="none" stroke="#8B0000" stroke-width="0.6"/>
+                <!-- open codex -->
+                <path d="M23 16 L14 14 L14 30 L23 32 Z" fill="rgba(120,0,0,0.5)" stroke="#CC0000" stroke-width="0.9"/>
+                <path d="M23 16 L32 14 L32 30 L23 32 Z" fill="rgba(90,0,0,0.5)" stroke="#CC0000" stroke-width="0.9"/>
+                <line x1="23" y1="16" x2="23" y2="32" stroke="#C9A84C" stroke-width="0.8"/>
+                <line x1="16.5" y1="19" x2="21" y2="19.8" stroke="#8B0000" stroke-width="0.6"/>
+                <line x1="16.5" y1="22" x2="21" y2="22.8" stroke="#8B0000" stroke-width="0.6"/>
+                <line x1="16.5" y1="25" x2="21" y2="25.8" stroke="#8B0000" stroke-width="0.6"/>
+                <line x1="25" y1="19.8" x2="29.5" y2="19" stroke="#8B0000" stroke-width="0.6"/>
+                <line x1="25" y1="22.8" x2="29.5" y2="22" stroke="#8B0000" stroke-width="0.6"/>
+                <line x1="25" y1="25.8" x2="29.5" y2="25" stroke="#8B0000" stroke-width="0.6"/>
+              </svg>
+            </div>
+            <div class="mod-title">Quest &amp; Oath<br>Rulings</div>
+            <div class="mod-divider"></div>
+            <div class="mod-desc">Sanctioned rulings archive. All confirmed, provisional, and pending Q&amp;O adjudications.</div>
+            <div class="mod-status online">Online</div>
+          </a>
+
+          <!-- MODULE II -->
+          <a href="https://uglymrtinhead.github.io/ixth-legion-quest-documentorum/IXth_Legion_QO_Documentorum.html" class="module-card">
+            <div class="sweep"></div>
+            <div class="bracket tl"></div>
+            <div class="bracket br"></div>
+            <div class="mod-number">MODULE · II</div>
+            <div class="mod-icon">
+              <svg width="46" height="46" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="23,3 40,12 40,34 23,43 6,34 6,12" fill="rgba(40,0,0,0.5)" stroke="#C9A84C" stroke-width="1"/>
+                <polygon points="23,6 37,13.5 37,32.5 23,40 9,32.5 9,13.5" fill="none" stroke="#8B0000" stroke-width="0.6"/>
+                <rect x="13" y="14" width="20" height="18" rx="1" fill="rgba(120,0,0,0.4)" stroke="#CC0000" stroke-width="0.9"/>
+                <line x1="16" y1="19" x2="30" y2="19" stroke="#C9A84C" stroke-width="0.7"/>
+                <line x1="16" y1="22" x2="30" y2="22" stroke="#8B0000" stroke-width="0.6"/>
+                <line x1="16" y1="25" x2="25" y2="25" stroke="#8B0000" stroke-width="0.6"/>
+                <circle cx="28" cy="28" r="4" fill="rgba(40,0,0,0.8)" stroke="#C9A84C" stroke-width="0.8"/>
+                <line x1="26.5" y1="28" x2="29.5" y2="28" stroke="#C9A84C" stroke-width="0.7"/>
+                <line x1="28" y1="26.5" x2="28" y2="29.5" stroke="#C9A84C" stroke-width="0.7"/>
+              </svg>
+            </div>
+            <div class="mod-title">Quest &amp; Oath<br>Documentorum</div>
+            <div class="mod-divider"></div>
+            <div class="mod-desc">Q&amp;O submission interface. Navigate active quests, oath requirements, and chapter honours.</div>
+            <div class="mod-status online">Online</div>
+          </a>
+
+          <!-- MODULE III -->
+          <a href="https://github.com/uglymrtinhead/Lexmechanic" class="module-card" target="_blank">
+            <div class="sweep"></div>
+            <div class="bracket tl"></div>
+            <div class="bracket br"></div>
+            <div class="mod-number">MODULE · III</div>
+            <div class="mod-icon">
+              <svg width="46" height="46" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="23,3 40,12 40,34 23,43 6,34 6,12" fill="rgba(40,0,0,0.5)" stroke="#C9A84C" stroke-width="1"/>
+                <polygon points="23,6 37,13.5 37,32.5 23,40 9,32.5 9,13.5" fill="none" stroke="#8B0000" stroke-width="0.6"/>
+                <rect x="14" y="26" width="4" height="6"  fill="rgba(139,0,0,0.7)" stroke="#CC0000" stroke-width="0.6"/>
+                <rect x="20.5" y="22" width="4" height="10" fill="rgba(160,0,0,0.7)" stroke="#CC0000" stroke-width="0.6"/>
+                <rect x="27" y="17" width="4" height="15" fill="#CC0000" stroke="#FF2020" stroke-width="0.6"/>
+                <line x1="12" y1="32.5" x2="33" y2="32.5" stroke="#C9A84C" stroke-width="0.8"/>
+                <circle cx="16" cy="24" r="1" fill="#C9A84C" opacity="0.7"/>
+                <circle cx="22.5" cy="20" r="1" fill="#C9A84C" opacity="0.7"/>
+                <circle cx="29" cy="15" r="1" fill="#C9A84C" opacity="0.7"/>
+              </svg>
+            </div>
+            <div class="mod-title">Lexmechanic<br>AAR Plugin</div>
+            <div class="mod-divider"></div>
+            <div class="mod-desc">BetterDiscord plugin. Auto-tallies AAR submissions and shifts PVP scores. Download &amp; install required.</div>
+            <div class="mod-status pending">Download</div>
+          </a>
+
+          <!-- MODULE IV -->
+          <a href="https://uglymrtinhead.github.io/qnodocumentorum/" class="module-card">
+            <div class="sweep"></div>
+            <div class="bracket tl"></div>
+            <div class="bracket br"></div>
+            <div class="mod-number">MODULE · IV</div>
+            <div class="mod-icon">
+              <svg width="46" height="46" viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="23,3 40,12 40,34 23,43 6,34 6,12" fill="rgba(40,0,0,0.5)" stroke="#C9A84C" stroke-width="1"/>
+                <polygon points="23,6 37,13.5 37,32.5 23,40 9,32.5 9,13.5" fill="none" stroke="#8B0000" stroke-width="0.6"/>
+                <circle cx="23" cy="22" r="8" fill="rgba(80,0,0,0.4)" stroke="#CC0000" stroke-width="0.9"/>
+                <circle cx="23" cy="22" r="2.5" fill="rgba(139,0,0,0.8)" stroke="#C9A84C" stroke-width="0.7"/>
+                <line x1="23" y1="14.5" x2="23" y2="17" stroke="#C9A84C" stroke-width="0.8"/>
+                <line x1="23" y1="27" x2="23" y2="29.5" stroke="#C9A84C" stroke-width="0.8"/>
+                <line x1="15.5" y1="22" x2="18" y2="22" stroke="#C9A84C" stroke-width="0.8"/>
+                <line x1="28" y1="22" x2="30.5" y2="22" stroke="#C9A84C" stroke-width="0.8"/>
+                <line x1="17.3" y1="16.3" x2="19" y2="18" stroke="#8B0000" stroke-width="0.7"/>
+                <line x1="27" y1="26" x2="28.7" y2="27.7" stroke="#8B0000" stroke-width="0.7"/>
+                <line x1="28.7" y1="16.3" x2="27" y2="18" stroke="#8B0000" stroke-width="0.7"/>
+                <line x1="19" y1="26" x2="17.3" y2="27.7" stroke="#8B0000" stroke-width="0.7"/>
+              </svg>
+            </div>
+            <div class="mod-title">Documentorum<br>Logisticiam</div>
+            <div class="mod-divider"></div>
+            <div class="mod-desc">Q&amp;O oversight record search. Query any brother's overseen Q&amp;O history across all chapter records.</div>
+            <div class="mod-status online">Online</div>
+          </a>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- STATUS STRIP -->
+    <div class="status-strip">
+      <div class="ss-item">SYS: <span class="ss-val">NOMINAL</span></div>
+      <div class="ss-sep">·</div>
+      <div class="ss-item">DATE: <span class="ss-val">31.05.M26</span></div>
+      <div class="ss-sep">·</div>
+      <div class="ss-marquee">
+        <span class="ss-scroll">
+          IMMORTAL IXTH LEGION · IN SANGUINEM VERITAS · ALL RULINGS SUBJECT TO AMENDMENT BY LOGISTICIAM · FOR THE EMPEROR AND SANGUINIUS · MACHINE SPIRIT SANCTIFIED · COGITATOR NODE IXTH-CENTRAL-01 · CLEARANCE LEVEL: BATTLE BROTHER AND ABOVE · DATA INTEGRITY MAINTAINED · PURITY OF RECORD UPHELD · SANGUIS IMPERATORIS ·
+        </span>
+      </div>
+      <div class="ss-sep">·</div>
+      <div class="ss-item">VER: <span class="ss-val">1.1</span></div>
+    </div>
+
+  </div><!-- /screen -->
+
+  <!-- BOTTOM BEZEL -->
+  <div class="bezel-bottom">
+    <div class="bezel-row">
+      <div class="br-thick"></div>
+    </div>
+    <div class="bezel-row">
+      <div class="br-line"></div>
+      <div class="bezel-indent">
+        <div class="bezel-led dim"></div>
+        <span>IMMORTAL IXTH LEGION // LOGISTICIAM SANCTIONED // FOR THE EMPEROR AND SANGUINIUS</span>
+        <div class="bezel-led dim"></div>
+      </div>
+      <div class="br-line"></div>
+    </div>
+  </div>
+
+</div><!-- /outer-frame -->
+
+</body>
+</html>
